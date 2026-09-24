@@ -1,32 +1,70 @@
 # Claude Pet
 
-Un petit compagnon en pixel art qui vit sur ton bureau et montre ce que fait Claude Code en ce moment.
+A small pixel-art pet that lives on your desktop and shows what Claude Code is doing right now. It works on Windows and macOS.
 
-## États
+## States
 
-Le pet change d'animation selon l'état écrit dans `state.txt` :
+The pet reads its state from `state.txt`, next to `pet.pyw`, and plays a matching animation and sound:
 
-| État | Signification |
+| State | Meaning |
 | --- | --- |
-| `working` | Claude travaille |
-| `idle` | Claude attend |
-| `question` | Claude te pose une question |
-| `sleeping` | Aucune session active |
-| `tired HH:MM` | Il se fait tard |
+| `working` | Claude is working |
+| `idle` | Claude is waiting for you |
+| `question` | Claude is asking you something |
+| `sleeping` | No active session |
+| `tired HH:MM` | You hit your usage limit; it resets at `HH:MM` |
 
-Tu peux remplir `state.txt` avec des hooks Claude Code (par exemple `UserPromptSubmit` → `working`, `Stop` → `idle`).
+The pet also checks the latest Claude Code transcript. If it finds a usage limit message, it switches to `tired` on its own.
 
-## Utilisation
+## Connecting it to Claude Code
 
-Il faut Python 3 avec Tkinter (inclus par défaut).
+Use [Claude Code hooks](https://docs.claude.com/en/docs/claude-code/hooks) to write the state. Example for `~/.claude/settings.json` (replace the path):
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "echo working > /path/to/claude-pet/state.txt" }] }],
+    "Notification":     [{ "hooks": [{ "type": "command", "command": "echo question > /path/to/claude-pet/state.txt" }] }],
+    "Stop":             [{ "hooks": [{ "type": "command", "command": "echo idle > /path/to/claude-pet/state.txt" }] }],
+    "SessionEnd":       [{ "hooks": [{ "type": "command", "command": "echo sleeping > /path/to/claude-pet/state.txt" }] }]
+  }
+}
+```
+
+## Running it
+
+Requirements: Python 3 with Tkinter (included with most installs). On Windows, `pip install pystray pillow` adds the tray icon.
 
 ```bash
 python pet.pyw
 ```
 
-- **Windows** : il s'affiche en bas à droite, avec une icône dans la barre des tâches.
-- **macOS** : il s'affiche en haut au centre, sous l'encoche.
-- **Glisser** le pet pour le déplacer. Sa position est mémorisée.
-- **Clic droit** : déplacer, changer la taille, masquer ou quitter.
+- **Windows**: bottom right of the screen, with a tray icon. `kill_pet.bat` stops it.
+- **macOS**: top center, just under the notch.
 
-Sur Windows, `kill_pet.bat` arrête le pet.
+## Controls
+
+- **Drag** the pet to move it. Its position is saved.
+- **Right-click** (or the tray icon on Windows) opens the menu:
+  - Move / reset position
+  - Size: small, medium, large
+  - Screen: primary or secondary
+  - Sounds on / off
+  - Wander around the desktop
+  - Always on top, or behind windows on the desktop
+  - Eco mode: pauses the animation when the pet is covered
+  - Hide / quit
+
+## Configuration
+
+Settings are saved in `config.json`, next to the script:
+
+| Key | Default | Values |
+| --- | --- | --- |
+| `size` | `moyen` | `petit`, `moyen`, `grand` |
+| `monitor` | `primary` | `primary`, `secondary` |
+| `sounds` | `true` | `true`, `false` |
+| `wander` | `false` | `true`, `false` |
+| `layer` | `top` | `top`, `desktop` |
+| `eco` | `true` | `true`, `false` |
+| `pos` | `null` | saved position, or `null` for the default spot |
